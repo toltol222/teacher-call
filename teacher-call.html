@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>선생님 호출</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg: #0a0f1e;
+    --card: #111827;
+    --accent: #3b82f6;
+    --accent2: #60a5fa;
+    --text: #f1f5f9;
+    --muted: #94a3b8;
+    --success: #22c55e;
+    --warning: #f59e0b;
+    --border: rgba(255,255,255,0.07);
+    --input-bg: #1e2a3a;
+  }
+
+  body {
+    font-family: 'Noto Sans KR', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 32px 20px 48px;
+    background-image:
+      radial-gradient(ellipse at 20% 10%, rgba(59,130,246,0.12) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 80%, rgba(96,165,250,0.08) 0%, transparent 50%);
+  }
+
+  header { text-align: center; margin-bottom: 24px; }
+  header .label { font-size: 11px; letter-spacing: 3px; text-transform: uppercase; color: var(--accent2); margin-bottom: 10px; font-weight: 700; }
+  header h1 { font-size: clamp(20px, 5vw, 28px); font-weight: 900; line-height: 1.2; }
+  .divider { width: 40px; height: 2px; background: var(--accent); margin: 12px auto 0; border-radius: 2px; }
+
+  .step-indicator { display: flex; align-items: center; gap: 8px; margin-bottom: 24px; font-size: 12px; }
+  .step { padding: 4px 14px; border-radius: 999px; border: 1px solid var(--border); color: var(--muted); transition: all 0.2s; }
+  .step.active { background: var(--accent); color: #fff; border-color: var(--accent); font-weight: 700; }
+  .step.done { background: rgba(59,130,246,0.15); color: var(--accent2); border-color: rgba(59,130,246,0.3); }
+  .arrow { color: var(--muted); }
+
+  .screen { width: 100%; max-width: 480px; display: none; }
+  .screen.active { display: block; }
+
+  .form-group { margin-bottom: 20px; }
+  .form-label { font-size: 12px; font-weight: 700; letter-spacing: 1px; color: var(--muted); margin-bottom: 10px; display: block; }
+
+  .row-grid { display: grid; gap: 8px; }
+  .row-grid.grade { grid-template-columns: repeat(3, 1fr); }
+  .row-grid.class  { grid-template-columns: repeat(4, 1fr); }
+
+  .sel-btn {
+    background: var(--card); border: 1px solid var(--border); border-radius: 10px;
+    padding: 14px 6px; cursor: pointer; text-align: center;
+    font-family: 'Noto Sans KR', sans-serif; font-size: 17px; font-weight: 900;
+    color: var(--text); transition: all 0.15s; -webkit-tap-highlight-color: transparent;
+  }
+  .sel-btn:active { transform: scale(0.94); }
+  .sel-btn.selected { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+  .name-input {
+    width: 100%; background: var(--input-bg); border: 1px solid var(--border);
+    border-radius: 12px; padding: 16px 18px; font-size: 18px; font-weight: 700;
+    font-family: 'Noto Sans KR', sans-serif; color: var(--text); outline: none; transition: border-color 0.2s;
+  }
+  .name-input::placeholder { color: var(--muted); font-weight: 400; font-size: 15px; }
+  .name-input:focus { border-color: var(--accent); }
+
+  .next-btn {
+    width: 100%; background: var(--accent); border: none; border-radius: 12px;
+    padding: 18px; font-family: 'Noto Sans KR', sans-serif; font-size: 16px;
+    font-weight: 900; color: #fff; cursor: pointer; margin-top: 8px;
+    transition: all 0.18s; -webkit-tap-highlight-color: transparent;
+  }
+  .next-btn:active { transform: scale(0.97); background: #2563eb; }
+  .next-btn:disabled { opacity: 0.35; cursor: not-allowed; transform: none; }
+
+  .back-btn {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--text);
+    font-size: 16px;
+    font-weight: 700;
+    font-family: 'Noto Sans KR', sans-serif;
+    cursor: pointer;
+    padding: 14px 20px;
+    display: flex; align-items: center; gap: 8px;
+    width: 100%;
+    margin-bottom: 20px;
+    transition: background 0.15s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .back-btn:hover { background: rgba(255,255,255,0.1); }
+
+  .info-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: rgba(59,130,246,0.15); border: 1px solid rgba(59,130,246,0.3);
+    border-radius: 999px; padding: 6px 16px; font-size: 13px; font-weight: 700;
+    color: var(--accent2); margin-bottom: 20px;
+  }
+
+  .section-title { font-size: 12px; color: var(--muted); font-weight: 700; letter-spacing: 1px; margin-bottom: 12px; }
+
+  .teacher-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+
+  .teacher-btn {
+    background: var(--card); border: 1px solid var(--border); border-radius: 14px;
+    padding: 16px 10px; cursor: pointer; text-align: center;
+    font-family: 'Noto Sans KR', sans-serif; transition: all 0.18s ease;
+    position: relative; overflow: hidden; -webkit-tap-highlight-color: transparent;
+  }
+  .teacher-btn::before {
+    content: ''; position: absolute; inset: 0;
+    background: linear-gradient(135deg, rgba(59,130,246,0.15), transparent);
+    opacity: 0; transition: opacity 0.18s;
+  }
+  .teacher-btn:not(.disabled):active::before { opacity: 1; }
+  .teacher-btn:not(.disabled):active { transform: scale(0.96); border-color: var(--accent); }
+  .teacher-btn.disabled { opacity: 0.35; cursor: not-allowed; }
+  .teacher-btn.locked { opacity: 0.25; cursor: not-allowed; border-color: rgba(245,158,11,0.3) !important; }
+  .teacher-btn.locked .suffix { color: var(--warning) !important; font-weight: 700; }
+  .teacher-btn.warned { border-color: var(--warning) !important; }
+
+  .teacher-btn .class-tag { font-size: 10px; font-weight: 700; letter-spacing: 1px; color: var(--accent2); margin-bottom: 5px; }
+  .teacher-btn .name { font-size: 17px; font-weight: 900; color: var(--text); }
+  .teacher-btn .suffix { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .teacher-btn .call-count {
+    font-size: 10px; color: var(--warning); font-weight: 700;
+    margin-top: 4px; opacity: 0; transition: opacity 0.2s;
+  }
+  .teacher-btn.once .call-count { opacity: 1; }
+
+  .cooldown-bar {
+    position: absolute; bottom: 0; left: 0;
+    height: 3px; background: var(--accent); width: 0%;
+    border-radius: 0 0 14px 14px;
+  }
+
+  /* 안내 모달 */
+  .modal-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.7);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 1000; opacity: 0; pointer-events: none;
+    transition: opacity 0.25s;
+    padding: 24px;
+  }
+  .modal-overlay.show { opacity: 1; pointer-events: all; }
+
+  .modal {
+    background: #1a2235;
+    border: 1px solid rgba(245,158,11,0.4);
+    border-radius: 20px;
+    padding: 32px 28px;
+    text-align: center;
+    max-width: 360px;
+    width: 100%;
+    transform: scale(0.92);
+    transition: transform 0.25s;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+  }
+  .modal-overlay.show .modal { transform: scale(1); }
+
+  .modal-icon { font-size: 40px; margin-bottom: 14px; }
+  .modal-title { font-size: 18px; font-weight: 900; margin-bottom: 10px; color: var(--text); }
+  .modal-desc { font-size: 13px; color: var(--muted); line-height: 1.7; margin-bottom: 24px; }
+  .modal-teacher { color: var(--warning); font-weight: 700; }
+
+  .modal-btn {
+    width: 100%; background: var(--accent); border: none; border-radius: 10px;
+    padding: 14px; font-family: 'Noto Sans KR', sans-serif; font-size: 15px;
+    font-weight: 700; color: #fff; cursor: pointer; transition: all 0.15s;
+  }
+  .modal-btn:active { background: #2563eb; transform: scale(0.97); }
+
+  .ripple {
+    position: absolute; border-radius: 50%;
+    background: rgba(59,130,246,0.35);
+    animation: rippleAnim 0.5s ease-out forwards; pointer-events: none;
+  }
+  @keyframes rippleAnim {
+    from { width: 0; height: 0; opacity: 1; transform: translate(-50%,-50%) scale(1); }
+    to { width: 200px; height: 200px; opacity: 0; transform: translate(-50%,-50%) scale(1); }
+  }
+
+  .toast {
+    position: fixed; bottom: 40px; left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--success); color: #fff;
+    padding: 14px 28px; border-radius: 999px;
+    font-size: 15px; font-weight: 700; opacity: 0; pointer-events: none;
+    transition: all 0.3s ease; white-space: nowrap;
+    box-shadow: 0 8px 32px rgba(34,197,94,0.4); z-index: 999;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  .info-section {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 20px;
+    margin-bottom: 14px;
+  }
+  .info-title {
+    font-size: 13px; font-weight: 900; color: var(--accent2);
+    margin-bottom: 12px; letter-spacing: 0.5px;
+  }
+  .info-list {
+    padding-left: 18px; color: var(--text);
+    font-size: 14px; line-height: 2;
+  }
+  .warn-section {
+    background: rgba(245,158,11,0.07);
+    border: 1px solid rgba(245,158,11,0.25);
+    border-radius: 14px;
+    padding: 20px;
+    margin-bottom: 20px;
+  }
+  .warn-title {
+    font-size: 13px; font-weight: 900; color: var(--warning);
+    margin-bottom: 12px; letter-spacing: 0.5px;
+  }
+  .warn-list {
+    padding-left: 18px; color: var(--text);
+    font-size: 14px; line-height: 2;
+  }
+  .warn-list strong { color: var(--warning); }
+
+  .footer { margin-top: 28px; font-size: 11px; color: var(--muted); text-align: center; line-height: 1.8; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="label">교무실</div>
+  <h1>선생님을 찾아주세요</h1>
+  <div class="divider"></div>
+</header>
+
+<div class="step-indicator">
+  <div class="step active" id="s0">안내</div>
+  <div class="arrow">›</div>
+  <div class="step" id="s1">1 내 정보 입력</div>
+  <div class="arrow">›</div>
+  <div class="step" id="s2">2 선생님 선택</div>
+</div>
+
+<!-- STEP 0: 안내 -->
+<div class="screen active" id="screen0">
+  <div class="info-section">
+    <div class="info-title">📋 이용 방법</div>
+    <ol class="info-list">
+      <li>내 학년, 반, 이름을 입력하세요</li>
+      <li>찾으시는 선생님을 선택하면 교무실 안으로 안내됩니다</li>
+      <li>선생님이 오실 때까지 잠시 기다려 주세요</li>
+    </ol>
+  </div>
+  <div class="warn-section">
+    <div class="warn-title">⚠️ 주의사항</div>
+    <ul class="warn-list">
+      <li>시험 기간 중 교무실 출입은 삼가 주세요</li>
+      <li><strong>장난으로 호출할 경우 벌점 10점</strong></li>
+      <li>같은 선생님을 반복 호출하면 호출이 제한됩니다</li>
+      <li>용무가 없다면 자리로 돌아가 주세요</li>
+    </ul>
+  </div>
+  <button class="next-btn" id="start-btn">시작하기 →</button>
+</div>
+
+<!-- STEP 1 -->
+<div class="screen" id="screen1">
+  <div class="form-group">
+    <span class="form-label">학년을 선택하세요</span>
+    <div class="row-grid grade">
+      <button class="sel-btn" data-grade="1">1학년</button>
+      <button class="sel-btn" data-grade="2">2학년</button>
+      <button class="sel-btn" data-grade="3">3학년</button>
+    </div>
+  </div>
+  <div class="form-group">
+    <span class="form-label">반을 선택하세요</span>
+    <div class="row-grid class" id="class-grid"></div>
+  </div>
+  <div class="form-group">
+    <span class="form-label">이름을 입력하세요</span>
+    <input class="name-input" id="name-input" type="text" placeholder="홍길동" maxlength="6" autocomplete="off" />
+  </div>
+  <button class="next-btn" id="next-btn" disabled>다음 →</button>
+</div>
+
+<!-- STEP 2 -->
+<div class="screen" id="screen2">
+  <button class="back-btn" id="back-btn">← 처음으로</button>
+  <div class="info-badge" id="info-badge"></div>
+  <div class="section-title">찾으시는 선생님을 선택하세요</div>
+  <div class="teacher-grid" id="teacher-grid"></div>
+</div>
+
+<!-- 안내 모달 -->
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <div class="modal-icon">😥</div>
+    <div class="modal-title">자리에 안 계신 것 같아요</div>
+    <div class="modal-desc">
+      <span class="modal-teacher" id="modal-teacher-name"></span> 선생님께<br>
+      두 번 안내했지만 오시지 않았어요.<br><br>
+      잠시 후 다시 시도하거나<br>다른 선생님께 문의해 보세요.
+    </div>
+    <button class="modal-btn" id="modal-close">확인</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<div class="footer">
+  시험기간 중 교무실 출입을 자제해 주세요<br>
+  버튼을 누르면 선생님께 안내됩니다
+</div>
+
+<script>
+const teachers = [
+  { class: "3-1반",  name: "이선영" },
+  { class: "3-2반",  name: "박은진" },
+  { class: "3-3반",  name: "정지연" },
+  { class: "3-4반",  name: "이가혜" },
+  { class: "3-5반",  name: "장정원" },
+  { class: "3-6반",  name: "차경호" },
+  { class: "3-7반",  name: "최혜림" },
+  { class: "3-8반",  name: "이지은" },
+  { class: "3-9반",  name: "장경진" },
+  { class: "3-10반", name: "이병호" },
+  { class: "3-11반", name: "박정은" },
+];
+
+const COOLDOWN = 20;
+
+let selectedGrade = null;
+let selectedClass = null;
+let speaking = false;
+let toastTimer = null;
+
+// 선생님별 호출 횟수 추적
+const callCount = {};
+teachers.forEach(t => callCount[t.name] = 0);
+
+const nameInput = document.getElementById('name-input');
+const nextBtn = document.getElementById('next-btn');
+const infoBadge = document.getElementById('info-badge');
+const toast = document.getElementById('toast');
+const modal = document.getElementById('modal');
+const modalTeacherName = document.getElementById('modal-teacher-name');
+
+// 시작하기 버튼
+document.getElementById('start-btn').addEventListener('click', () => {
+  document.getElementById('screen0').classList.remove('active');
+  document.getElementById('screen1').classList.add('active');
+  document.getElementById('s0').className = 'step done';
+  document.getElementById('s1').className = 'step active';
+});
+
+// 학년 버튼
+document.querySelectorAll('[data-grade]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('[data-grade]').forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+    selectedGrade = parseInt(btn.dataset.grade);
+    checkReady();
+  });
+});
+
+// 반 버튼
+const classGrid = document.getElementById('class-grid');
+for (let i = 1; i <= 11; i++) {
+  const btn = document.createElement('button');
+  btn.className = 'sel-btn';
+  btn.dataset.class = i;
+  btn.textContent = `${i}반`;
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('[data-class]').forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+    selectedClass = i;
+    checkReady();
+  });
+  classGrid.appendChild(btn);
+}
+
+nameInput.addEventListener('input', checkReady);
+
+function checkReady() {
+  nextBtn.disabled = !(selectedGrade && selectedClass && nameInput.value.trim().length >= 1);
+}
+
+nextBtn.addEventListener('click', () => {
+  infoBadge.textContent = `📌 ${selectedGrade}학년 ${selectedClass}반 · ${nameInput.value.trim()}`;
+  goToStep2();
+});
+
+document.getElementById('back-btn').addEventListener('click', goToStep1);
+
+function goToStep2() {
+  document.getElementById('screen1').classList.remove('active');
+  document.getElementById('screen2').classList.add('active');
+  document.getElementById('s1').className = 'step done';
+  document.getElementById('s2').className = 'step active';
+}
+
+function goToStep1() {
+  document.getElementById('screen2').classList.remove('active');
+  document.getElementById('screen0').classList.add('active');
+  document.getElementById('s0').className = 'step active';
+  document.getElementById('s1').className = 'step';
+  document.getElementById('s2').className = 'step';
+
+  // 선택 초기화
+  selectedGrade = null;
+  selectedClass = null;
+  document.querySelectorAll('.sel-btn').forEach(b => b.classList.remove('selected'));
+  nameInput.value = '';
+  nextBtn.disabled = true;
+
+  // 선생님 호출 카운트 초기화
+  teachers.forEach(t => callCount[t.name] = 0);
+  document.querySelectorAll('.teacher-btn').forEach(b => {
+    b.classList.remove('once', 'warned', 'disabled', 'locked');
+    const suffix = b.querySelector('.suffix');
+    if (suffix) suffix.textContent = '선생님';
+  });
+  lockedBtn = null;
+}
+
+// 선생님 버튼 생성
+const teacherGrid = document.getElementById('teacher-grid');
+teachers.forEach(t => {
+  const btn = document.createElement('button');
+  btn.className = 'teacher-btn';
+  btn.dataset.teacherName = t.name;
+  btn.innerHTML = `
+    <div class="class-tag">${t.class}</div>
+    <div class="name">${t.name}</div>
+    <div class="suffix">선생님</div>
+    <div class="call-count">한 번 더 누르면 안내돼요</div>
+    <div class="cooldown-bar"></div>
+  `;
+  btn.addEventListener('click', (e) => {
+    if (btn.classList.contains('disabled') || speaking) return;
+    addRipple(btn, e);
+    callTeacher(t.name, btn);
+  });
+  teacherGrid.appendChild(btn);
+});
+
+function callTeacher(teacherName, btn) {
+  callCount[teacherName]++;
+  const count = callCount[teacherName];
+
+  const studentName = nameInput.value.trim();
+  const text = `${teacherName} 선생님, ${selectedGrade}학년 ${selectedClass}반 ${studentName} 학생이 교무실 앞에서 찾아왔습니다.`;
+  speak(text);
+  showToast(`📢 ${teacherName} 선생님께 안내 중...`);
+  startCooldown(btn);
+
+  // 2번째 호출이면 쿨타임 끝난 후 모달 표시
+  if (count === 2) {
+    setTimeout(() => {
+      showModal(teacherName, btn);
+    }, COOLDOWN * 1000);
+  }
+
+  // 1번 호출 후 버튼에 힌트 표시
+  if (count === 1) {
+    btn.classList.add('once');
+  } else {
+    btn.classList.remove('once');
+  }
+}
+
+let lockedBtn = null;
+
+function showModal(teacherName, btn) {
+  modalTeacherName.textContent = teacherName;
+  modal.classList.add('show');
+  callCount[teacherName] = 0;
+  btn.classList.remove('once', 'warned');
+  lockedBtn = btn;
+}
+
+document.getElementById('modal-close').addEventListener('click', () => {
+  modal.classList.remove('show');
+  // 확인 누르면 모든 선생님 버튼 잠금
+  document.querySelectorAll('.teacher-btn').forEach(b => {
+    b.classList.add('disabled', 'locked');
+    const suffix = b.querySelector('.suffix');
+    if (suffix) suffix.textContent = '자리 비움';
+  });
+  lockedBtn = null;
+});
+
+function speak(text) {
+  if (!window.speechSynthesis) return;
+  speaking = true;
+  const msg = new SpeechSynthesisUtterance(text);
+  msg.lang = 'ko-KR';
+  msg.rate = 0.88;
+  msg.pitch = 1.0;
+  msg.volume = 1.0;
+  const voices = window.speechSynthesis.getVoices();
+  // 한국어 여성 음성 우선 선택
+  const koVoice = voices.find(v => v.lang.startsWith('ko') && /female|woman|여성|유나|지수|선희/i.test(v.name))
+    || voices.find(v => v.lang.startsWith('ko'));
+  if (koVoice) msg.voice = koVoice;
+  msg.onend = () => { speaking = false; };
+  msg.onerror = () => { speaking = false; };
+  window.speechSynthesis.cancel();
+  window.speechSynthesis.speak(msg);
+}
+
+function startCooldown(btn) {
+  btn.classList.add('disabled');
+  const bar = btn.querySelector('.cooldown-bar');
+  bar.style.transition = 'none';
+  bar.style.width = '100%';
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    bar.style.transition = `width ${COOLDOWN}s linear`;
+    bar.style.width = '0%';
+  }));
+  setTimeout(() => {
+    btn.classList.remove('disabled');
+    bar.style.width = '0%';
+  }, COOLDOWN * 1000);
+}
+
+function showToast(text) {
+  toast.textContent = text;
+  toast.classList.add('show');
+  if (toastTimer) clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => toast.classList.remove('show'), 3500);
+}
+
+function addRipple(btn, e) {
+  const rect = btn.getBoundingClientRect();
+  const ripple = document.createElement('span');
+  ripple.className = 'ripple';
+  ripple.style.left = (e.clientX - rect.left) + 'px';
+  ripple.style.top = (e.clientY - rect.top) + 'px';
+  btn.appendChild(ripple);
+  setTimeout(() => ripple.remove(), 600);
+}
+
+window.speechSynthesis.onvoiceschanged = () => {};
+window.speechSynthesis.getVoices();
+
+// 블루투스 스피커 연결 유지용 무음 오디오 (3분마다)
+// WAV 형식의 0.1초짜리 무음 데이터 (base64)
+const SILENT_WAV = 'data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=';
+
+function keepBluetoothAlive() {
+  const audio = new Audio(SILENT_WAV);
+  audio.volume = 0.01;
+  audio.play().catch(() => {});
+}
+
+let bluetoothTimer = null;
+document.addEventListener('click', function startKeepAlive() {
+  keepBluetoothAlive();
+  bluetoothTimer = setInterval(keepBluetoothAlive, 3 * 60 * 1000);
+  document.removeEventListener('click', startKeepAlive);
+}, { once: true });
+</script>
+</body>
+</html>
