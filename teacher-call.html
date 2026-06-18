@@ -519,9 +519,8 @@ function speak(text) {
   msg.pitch = 1.0;
   msg.volume = 1.0;
   const voices = window.speechSynthesis.getVoices();
-  // 한국어 여성 음성 우선 선택
-  const koVoice = voices.find(v => v.lang.startsWith('ko') && /female|woman|여성|유나|지수|선희/i.test(v.name))
-    || voices.find(v => v.lang.startsWith('ko'));
+  // 한국어 음성 중 첫 번째로 고정 (안정성 우선)
+  const koVoice = voices.find(v => v.lang.startsWith('ko'));
   if (koVoice) msg.voice = koVoice;
   msg.onend = () => { speaking = false; };
   msg.onerror = () => { speaking = false; };
