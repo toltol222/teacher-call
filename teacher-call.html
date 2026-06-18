@@ -507,6 +507,12 @@ document.getElementById('modal-close').addEventListener('click', () => {
 function speak(text) {
   if (!window.speechSynthesis) return;
   speaking = true;
+
+  // 크롬 speechSynthesis 장시간 사용 시 음질 깨지는 버그 우회
+  window.speechSynthesis.cancel();
+  window.speechSynthesis.pause();
+  window.speechSynthesis.resume();
+
   const msg = new SpeechSynthesisUtterance(text);
   msg.lang = 'ko-KR';
   msg.rate = 0.88;
@@ -519,9 +525,20 @@ function speak(text) {
   if (koVoice) msg.voice = koVoice;
   msg.onend = () => { speaking = false; };
   msg.onerror = () => { speaking = false; };
-  window.speechSynthesis.cancel();
-  window.speechSynthesis.speak(msg);
+
+  // 약간의 지연 후 재생 (resume 직후 바로 speak하면 씹히는 경우가 있어 안전장치)
+  setTimeout(() => {
+    window.speechSynthesis.speak(msg);
+  }, 50);
 }
+
+// 크롬 speechSynthesis가 장시간 idle 상태일 때 깨지는 것을 방지하기 위해
+// 15초마다 pause/resume을 반복해서 엔진을 "깨워둠"
+setInterval(() => {
+  if (window.speechSynthesis.speaking) return; // 말하는 중이면 건드리지 않음
+  window.speechSynthesis.pause();
+  window.speechSynthesis.resume();
+}, 15000);
 
 function startCooldown(btn) {
   btn.classList.add('disabled');
