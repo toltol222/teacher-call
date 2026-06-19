@@ -462,7 +462,7 @@ teachers.forEach(t => {
     <div class="cooldown-bar"></div>
   `;
   btn.addEventListener('click', (e) => {
-    if (btn.classList.contains('disabled') || speaking) return;
+    if (btn.classList.contains('disabled')) return;
     addRipple(btn, e);
     callTeacher(t.name, btn);
   });
@@ -523,41 +523,17 @@ document.getElementById('modal-close').addEventListener('click', () => {
 });
 
 function speak(text) {
-  if (!window.speechSynthesis) { speaking = false; return; }
-
-  window.speechSynthesis.cancel();
-
+  if (!window.speechSynthesis) return;
   const msg = new SpeechSynthesisUtterance(text);
   msg.lang = 'ko-KR';
   msg.rate = 0.88;
   msg.pitch = 1.0;
   msg.volume = 1.0;
-
-  const trySpeak = () => {
-    const voices = window.speechSynthesis.getVoices();
-    const koVoice = voices.find(v => v.lang.startsWith('ko'));
-    if (koVoice) msg.voice = koVoice;
-
-    msg.onend = () => { speaking = false; };
-    msg.onerror = () => { speaking = false; };
-
-    // 안전장치: 10초 후에도 speaking이면 강제 해제
-    setTimeout(() => { speaking = false; }, 10000);
-
-    window.speechSynthesis.speak(msg);
-  };
-
   const voices = window.speechSynthesis.getVoices();
-  if (voices.length > 0) {
-    speaking = true;
-    trySpeak();
-  } else {
-    window.speechSynthesis.onvoiceschanged = () => {
-      speaking = true;
-      trySpeak();
-      window.speechSynthesis.onvoiceschanged = null;
-    };
-  }
+  const koVoice = voices.find(v => v.lang.startsWith('ko'));
+  if (koVoice) msg.voice = koVoice;
+  window.speechSynthesis.cancel();
+  window.speechSynthesis.speak(msg);
 }
 
 function startCooldown(btn) {
