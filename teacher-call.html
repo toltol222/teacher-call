@@ -530,7 +530,10 @@ function speak(text) {
   msg.pitch = 1.0;
   msg.volume = 1.0;
   const voices = window.speechSynthesis.getVoices();
-  const koVoice = voices.find(v => v.lang.startsWith('ko'));
+  const koVoice = voices.find(v => v.name === 'Google 한국어 1 (Natural)')
+    || voices.find(v => v.name.startsWith('Google 한국어'))
+    || voices.find(v => v.name.startsWith('Chrome OS 한국어'))
+    || voices.find(v => v.lang.startsWith('ko'));
   if (koVoice) msg.voice = koVoice;
   window.speechSynthesis.cancel();
   window.speechSynthesis.speak(msg);
